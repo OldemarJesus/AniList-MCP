@@ -1,0 +1,23 @@
+services:
+  anilist-mcp:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: anilist-mcp:latest
+    container_name: anilist-mcp
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - TRANSPORT=sse
+      - PORT=3000
+      - HOST=0.0.0.0
+      - ANILIST_TOKEN=${ANILIST_TOKEN:-}
+      - LOG_LEVEL=${LOG_LEVEL:-info}
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:3000/health || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
