@@ -1,18 +1,39 @@
 import AniList from "anilist-node";
 import { AiringFilterOptions } from "../types/index.js";
+import { getCurrentToken } from "../context.js";
 
 export class AniListService {
-  private client: any;
-  private token?: string;
+  private defaultClient: any;
+  private defaultToken?: string;
 
   constructor(token?: string) {
-    this.token = token;
-    // anilist-node accepts accessKey and options
-    this.client = new (AniList as any)(token || null, { timeout: 15000 });
+    this.defaultToken = token;
+    this.defaultClient = new (AniList as any)(token || null, { timeout: 15000 });
+  }
+
+  public get client(): any {
+    return this.getClient();
+  }
+
+  public set client(customClient: any) {
+    this.defaultClient = customClient;
+  }
+
+  public getActiveToken(): string | undefined {
+    return getCurrentToken() || this.defaultToken;
+  }
+
+  public getClient(): any {
+    const contextToken = getCurrentToken();
+    if (contextToken) {
+      return new (AniList as any)(contextToken, { timeout: 15000 });
+    }
+    return this.defaultClient;
   }
 
   public isAuthenticated(): boolean {
-    return Boolean(this.token && this.token.length > 0);
+    const token = this.getActiveToken();
+    return Boolean(token && token.length > 0);
   }
 
   /**
@@ -24,7 +45,7 @@ export class AniListService {
     }
     const safePage = Math.max(1, page);
     const safePerPage = Math.min(Math.max(1, perPage), 25);
-    return await this.client.searchEntry.anime(query.trim(), null, safePage, safePerPage);
+    return await this.getClient().searchEntry.anime(query.trim(), null, safePage, safePerPage);
   }
 
   /**
@@ -36,7 +57,7 @@ export class AniListService {
     }
     const safePage = Math.max(1, page);
     const safePerPage = Math.min(Math.max(1, perPage), 25);
-    return await this.client.searchEntry.manga(query.trim(), null, safePage, safePerPage);
+    return await this.getClient().searchEntry.manga(query.trim(), null, safePage, safePerPage);
   }
 
   /**
@@ -46,7 +67,7 @@ export class AniListService {
     if (!user) {
       throw new Error("User identifier (username or user_id) is required");
     }
-    const userData = await this.client.user.all(user);
+    const userData = await this.getClient().user.all(user);
     if (!userData) {
       throw new Error(`User '${user}' not found`);
     }
@@ -75,7 +96,7 @@ export class AniListService {
 
     // If specific anime ID is queried, fetch media-specific airing info
     if (animeId && typeof animeId === "number") {
-      const media = await this.client.media.anime(animeId);
+      const media = await this.getClient().media.anime(animeId);
       if (!media) {
         throw new Error(`Anime with ID ${animeId} not found`);
       }
@@ -144,8 +165,124 @@ export class AniListService {
       variables.airingAt_lesser = airingAtLesser;
     }
 
-    const response = await this.client.__util.send(query, variables);
+    const response = await this.getClient().__util.send(query, variables);
     return response?.Page || response;
+  }
+
+  /**
+   * Fetch currently authenticated user profile (Viewer)
+   */
+  public async getViewerProfile() {
+    if (!this.isAuthenticated()) {
+      throw new Error("Authentication required. Please authenticate via OAuth or provide an ANILIST_TOKEN.");
+    }
+
+    const query = `
+      query {
+        Viewer {
+          id
+          name
+          about
+          avatar {
+            large
+            medium
+          }
+          bannerImage
+          siteUrl
+          unreadNotificationCount
+          donatorTier
+          options {
+            titleLanguage
+            displayAdultContent
+          }
+          mediaListOptions {
+            scoreFormat
+          }
+          statistics {
+            anime {
+              count
+              meanScore
+              standardDeviation
+              minutesWatched
+              episodesWatched
+            }
+            manga {
+              count
+              meanScore
+              standardDeviation
+              chaptersRead
+              volumesRead
+            }
+          }
+        }
+      }
+    `;
+
+    const response = await this.getClient().__util.send(query);
+    return response?.Viewer || response;
+  }
+
+  /**
+   * Fetch authenticated user's anime or manga list entries
+   */
+  public async getViewerMediaList(type: "ANIME" | "MANGA" = "ANIME", status?: string) {
+    if (!this.isAuthenticated()) {
+      throw new Error("Authentication required. Please authenticate via OAuth or provide an ANILIST_TOKEN.");
+    }
+
+    const query = `
+      query ($userId: Int, $type: MediaType, $status: MediaListStatus) {
+        MediaListCollection (userId: $userId, type: $type, status: $status) {
+          lists {
+            name
+            isCustomList
+            isCompletedList: status
+            entries {
+              id
+              mediaId
+              status
+              score
+              progress
+              progressVolumes
+              repeat
+              private
+              notes
+              updatedAt
+              media {
+                id
+                title {
+                  romaji
+                  english
+                  native
+                  userPreferred
+                }
+                format
+                status
+                episodes
+                chapters
+                coverImage {
+                  medium
+                  large
+                }
+              }
+            }
+          }
+        }
+      }
+    `;
+
+    // First get Viewer ID
+    const viewer = await this.getViewerProfile();
+    const variables: Record<string, any> = {
+      userId: viewer.id,
+      type,
+    };
+    if (status) {
+      variables.status = status;
+    }
+
+    const response = await this.getClient().__util.send(query, variables);
+    return response?.MediaListCollection || response;
   }
 
   /**
@@ -155,7 +292,7 @@ export class AniListService {
     if (!recommendationId || typeof recommendationId !== "number") {
       throw new Error("Valid recommendation ID is required");
     }
-    const result = await this.client.recommendation.get(recommendationId);
+    const result = await this.getClient().recommendation.get(recommendationId);
     if (!result) {
       throw new Error(`Recommendation with ID ${recommendationId} not found`);
     }
@@ -171,6 +308,6 @@ export class AniListService {
     }
     const safePage = Math.max(1, page);
     const safePerPage = Math.min(Math.max(1, perPage), 25);
-    return await this.client.recommendation.getList(mediaId, safePage, safePerPage);
+    return await this.getClient().recommendation.getList(mediaId, safePage, safePerPage);
   }
 }

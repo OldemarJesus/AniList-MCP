@@ -53,6 +53,16 @@ When invoking AniList-MCP tools, follow these parameters:
   - `user_id` (number, optional): AniList user ID.
   *(Provide either `username` or `user_id`)*
 
+### `get_my_profile`
+- **Description**: Fetch the currently authenticated AniList user's profile, unread notification count, and anime/manga stats (via OAuth bearer token).
+- **Parameters**: None.
+
+### `get_my_media_list`
+- **Description**: Fetch the authenticated user's personal anime or manga list entries (including status, scores, progress, notes, and private entries).
+- **Parameters**:
+  - `type` (string, optional, default: `"ANIME"`): `"ANIME"` or `"MANGA"`.
+  - `status` (string, optional): Filter by list status (`"CURRENT"`, `"PLANNING"`, `"COMPLETED"`, `"DROPPED"`, `"PAUSED"`, `"REPEATING"`).
+
 ### `search_anime`
 - **Description**: Search anime titles by keyword.
 - **Parameters**:

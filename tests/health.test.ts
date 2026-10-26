@@ -74,5 +74,29 @@ describe("HTTP Endpoints & Health Check", () => {
 
       expect(res.status).toBe(200);
     });
+
+    it("should accept Authorization Bearer header without error on /mcp", async () => {
+      const anilistService = new AniListService();
+      const { server } = createMcpServer(baseConfig, anilistService);
+      const { app } = await createHttpApp(server, anilistService, baseConfig);
+
+      const res = await request(app)
+        .post("/mcp")
+        .set("Authorization", "Bearer user-oauth-access-token")
+        .set("Accept", "application/json, text/event-stream")
+        .send({
+          jsonrpc: "2.0",
+          method: "initialize",
+          id: 2,
+          params: {
+            protocolVersion: "2024-11-05",
+            capabilities: {},
+            clientInfo: { name: "librechat-client", version: "1.0.0" },
+          },
+        });
+
+      expect(res.status).toBe(200);
+    });
   });
 });
+

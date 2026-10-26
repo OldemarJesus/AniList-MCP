@@ -25,17 +25,21 @@ describe("MCP Tools Registration and Handling", () => {
       getAiringSchedule: jest.fn(),
       getRecommendation: jest.fn(),
       listRecommendations: jest.fn(),
+      getViewerProfile: jest.fn(),
+      getViewerMediaList: jest.fn(),
     };
 
     const created = createMcpServer(config, anilistMock as unknown as AniListService);
     server = created.server;
   });
 
-  it("should successfully register all 6 required tools", () => {
+  it("should successfully register all 8 required tools", () => {
     const registered = Object.keys(server._registeredTools);
     expect(registered).toEqual([
       "airing_schedule",
       "get_user_profile_stats",
+      "get_my_profile",
+      "get_my_media_list",
       "search_anime",
       "search_manga",
       "get_recommendation",
@@ -181,4 +185,38 @@ describe("MCP Tools Registration and Handling", () => {
       expect(res.content[0].text).toContain("Failed list");
     });
   });
+
+  describe("authenticated user tools", () => {
+    it("get_my_profile returns authenticated viewer data", async () => {
+      const mockViewer = { id: 12345, name: "OtakuKing" };
+      anilistMock.getViewerProfile.mockResolvedValue(mockViewer);
+
+      const handler = server._registeredTools["get_my_profile"].handler;
+      const res = await handler({});
+
+      expect(JSON.parse(res.content[0].text)).toEqual(mockViewer);
+    });
+
+    it("get_my_profile handles unauthenticated error", async () => {
+      anilistMock.getViewerProfile.mockRejectedValue(new Error("Authentication required"));
+
+      const handler = server._registeredTools["get_my_profile"].handler;
+      const res = await handler({});
+
+      expect(res.isError).toBe(true);
+      expect(res.content[0].text).toContain("Authentication required");
+    });
+
+    it("get_my_media_list returns list collection", async () => {
+      const mockCollection = { lists: [{ name: "Watching", entries: [] }] };
+      anilistMock.getViewerMediaList.mockResolvedValue(mockCollection);
+
+      const handler = server._registeredTools["get_my_media_list"].handler;
+      const res = await handler({ type: "ANIME", status: "CURRENT" });
+
+      expect(JSON.parse(res.content[0].text)).toEqual(mockCollection);
+      expect(anilistMock.getViewerMediaList).toHaveBeenCalledWith("ANIME", "CURRENT");
+    });
+  });
 });
+
