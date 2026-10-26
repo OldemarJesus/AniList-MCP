@@ -37,6 +37,42 @@ export class AniListService {
   }
 
   /**
+   * Directly fetch from AniList GraphQL API without passing through anilist-node's
+   * internal response interceptor (which throws on Viewer queries).
+   */
+  public async fetchGraphQL(query: string, variables?: Record<string, any>): Promise<any> {
+    const token = this.getActiveToken();
+    const headers: Record<string, string> = {
+      "Content-Type": "application/json",
+      Accept: "application/json",
+    };
+    if (token) {
+      headers["Authorization"] = `Bearer ${token}`;
+    }
+
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 15000);
+
+    try {
+      const response = await fetch("https://graphql.anilist.co", {
+        method: "POST",
+        headers,
+        body: JSON.stringify({ query, variables }),
+        signal: controller.signal,
+      });
+
+      const json: any = await response.json();
+      if (json.errors && json.errors.length > 0) {
+        throw new Error(json.errors.map((e: any) => e.message).join(", "));
+      }
+
+      return json.data;
+    } finally {
+      clearTimeout(timeout);
+    }
+  }
+
+  /**
    * Search for anime titles with pagination
    */
   public async searchAnime(query: string, page = 1, perPage = 10) {
@@ -218,7 +254,7 @@ export class AniListService {
       }
     `;
 
-    const response = await this.getClient().__util.send(query);
+    const response = await this.fetchGraphQL(query);
     return response?.Viewer || response;
   }
 
@@ -281,7 +317,7 @@ export class AniListService {
       variables.status = status;
     }
 
-    const response = await this.getClient().__util.send(query, variables);
+    const response = await this.fetchGraphQL(query, variables);
     return response?.MediaListCollection || response;
   }
 
