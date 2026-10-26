@@ -3,11 +3,14 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { AniListService } from "../services/anilist.js";
 
 export function registerRecommendationTools(server: McpServer, anilist: AniListService) {
-  server.tool(
+  server.registerTool(
     "get_recommendation",
-    "Fetch a specific AniList recommendation entry by its unique recommendation ID",
     {
-      id: z.number().describe("The unique AniList recommendation ID"),
+      description:
+        "Fetch a specific AniList recommendation entry by its unique recommendation ID",
+      inputSchema: {
+        id: z.number().describe("The unique AniList recommendation ID"),
+      },
     },
     async (args) => {
       try {
@@ -34,20 +37,23 @@ export function registerRecommendationTools(server: McpServer, anilist: AniListS
     }
   );
 
-  server.tool(
+  server.registerTool(
     "list_recommendations",
-    "List community recommendations and suggested media for a given anime or manga",
     {
-      media_id: z
-        .number()
-        .describe("The AniList Media ID (Anime or Manga ID) to find recommendations for"),
-      page: z.number().min(1).default(1).describe("Page number (default: 1)"),
-      per_page: z
-        .number()
-        .min(1)
-        .max(25)
-        .default(10)
-        .describe("Number of recommendations to return (default: 10, max: 25)"),
+      description:
+        "List community recommendations and suggested media for a given anime or manga",
+      inputSchema: {
+        media_id: z
+          .number()
+          .describe("The AniList Media ID (Anime or Manga ID) to find recommendations for"),
+        page: z.number().min(1).default(1).describe("Page number (default: 1)"),
+        per_page: z
+          .number()
+          .min(1)
+          .max(25)
+          .default(10)
+          .describe("Number of recommendations to return (default: 10, max: 25)"),
+      },
     },
     async (args) => {
       try {

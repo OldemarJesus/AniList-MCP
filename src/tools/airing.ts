@@ -3,33 +3,36 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { AniListService } from "../services/anilist.js";
 
 export function registerAiringTools(server: McpServer, anilist: AniListService) {
-  server.tool(
+  server.registerTool(
     "airing_schedule",
-    "Query upcoming anime broadcast schedules, episode air dates, countdown timers, or specific anime airing details",
     {
-      anime_id: z
-        .number()
-        .optional()
-        .describe("Optional AniList Media ID to get the schedule for a specific anime"),
-      not_yet_aired: z
-        .boolean()
-        .default(true)
-        .describe("Only return unreleased episodes (default: true)"),
-      page: z.number().min(1).default(1).describe("Page number (default: 1)"),
-      per_page: z
-        .number()
-        .min(1)
-        .max(25)
-        .default(10)
-        .describe("Number of schedules to return (default: 10, max: 25)"),
-      airing_at_greater: z
-        .number()
-        .optional()
-        .describe("Filter airing timestamps starting after this unix timestamp (seconds)"),
-      airing_at_lesser: z
-        .number()
-        .optional()
-        .describe("Filter airing timestamps ending before this unix timestamp (seconds)"),
+      description:
+        "Query upcoming anime broadcast schedules, episode air dates, countdown timers, or specific anime airing details",
+      inputSchema: {
+        anime_id: z
+          .number()
+          .optional()
+          .describe("Optional AniList Media ID to get the schedule for a specific anime"),
+        not_yet_aired: z
+          .boolean()
+          .default(true)
+          .describe("Only return unreleased episodes (default: true)"),
+        page: z.number().min(1).default(1).describe("Page number (default: 1)"),
+        per_page: z
+          .number()
+          .min(1)
+          .max(25)
+          .default(10)
+          .describe("Number of schedules to return (default: 10, max: 25)"),
+        airing_at_greater: z
+          .number()
+          .optional()
+          .describe("Filter airing timestamps starting after this unix timestamp (seconds)"),
+        airing_at_lesser: z
+          .number()
+          .optional()
+          .describe("Filter airing timestamps ending before this unix timestamp (seconds)"),
+      },
     },
     async (args) => {
       try {

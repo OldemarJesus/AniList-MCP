@@ -1,6 +1,8 @@
 export type TransportMode = "stdio" | "sse";
 
 export interface AppConfig {
+  name: string;
+  version: string;
   anilistToken?: string;
   transport: TransportMode;
   port: number;

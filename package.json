@@ -28,7 +28,7 @@
     "llm",
     "agents"
   ],
-  "author": "AniList-MCP Contributors",
+  "author": "Oldemar Jesus",
   "license": "MIT",
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.6.0",

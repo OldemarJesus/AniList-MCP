@@ -4,7 +4,13 @@ import { AppConfig, TransportMode } from "./types/index.js";
 // Load environment variables from .env file if available
 dotenv.config();
 
+export const DEFAULT_SERVER_NAME = "anilist-mcp";
+export const DEFAULT_SERVER_VERSION = "1.0.0";
+
 export function loadConfig(): AppConfig {
+  const name = process.env.MCP_SERVER_NAME || DEFAULT_SERVER_NAME;
+  const version = process.env.MCP_SERVER_VERSION || DEFAULT_SERVER_VERSION;
+
   const rawTransport = (process.env.TRANSPORT || "stdio").toLowerCase();
   const transport: TransportMode = rawTransport === "sse" ? "sse" : "stdio";
 
@@ -19,6 +25,8 @@ export function loadConfig(): AppConfig {
     : "info";
 
   return {
+    name,
+    version,
     anilistToken,
     transport,
     port: isNaN(port) ? 3000 : port,

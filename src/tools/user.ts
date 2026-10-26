@@ -3,18 +3,21 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { AniListService } from "../services/anilist.js";
 
 export function registerUserTools(server: McpServer, anilist: AniListService) {
-  server.tool(
+  server.registerTool(
     "get_user_profile_stats",
-    "Fetch an AniList user's profile information, avatar, banner, and in-depth anime watching / manga reading statistics",
     {
-      username: z
-        .string()
-        .optional()
-        .describe("The AniList username (e.g., 'joshjoshjosh')"),
-      user_id: z
-        .number()
-        .optional()
-        .describe("The AniList numerical user ID (e.g., 6820382)"),
+      description:
+        "Fetch an AniList user's profile information, avatar, banner, and in-depth anime watching / manga reading statistics",
+      inputSchema: {
+        username: z
+          .string()
+          .optional()
+          .describe("The AniList username (e.g., 'joshjoshjosh')"),
+        user_id: z
+          .number()
+          .optional()
+          .describe("The AniList numerical user ID (e.g., 6820382)"),
+      },
     },
     async (args) => {
       try {

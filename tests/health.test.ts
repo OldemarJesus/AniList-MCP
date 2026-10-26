@@ -4,8 +4,10 @@ import { createMcpServer } from "../src/server.js";
 import { AniListService } from "../src/services/anilist.js";
 import { AppConfig } from "../src/types/index.js";
 
-describe("HTTP Endpoints", () => {
+describe("HTTP Endpoints & Health Check", () => {
   const baseConfig: AppConfig = {
+    name: "test-anilist-mcp",
+    version: "2.1.0",
     transport: "sse",
     port: 3000,
     host: "0.0.0.0",
@@ -13,19 +15,19 @@ describe("HTTP Endpoints", () => {
   };
 
   describe("GET /health", () => {
-    it("should return 200 OK with healthy status and authenticated: false when no token is provided", async () => {
+    it("should return 200 OK with dynamically configured service name and version", async () => {
       const anilistService = new AniListService();
       const { server } = createMcpServer(baseConfig, anilistService);
-      const { app } = createHttpApp(server, anilistService, baseConfig);
+      const { app } = await createHttpApp(server, anilistService, baseConfig);
 
       const res = await request(app).get("/health");
 
       expect(res.status).toBe(200);
       expect(res.body).toMatchObject({
         status: "ok",
-        service: "anilist-mcp",
-        version: "1.0.0",
-        transport: "sse",
+        service: baseConfig.name,
+        version: baseConfig.version,
+        transport: baseConfig.transport,
         authenticated: false,
       });
       expect(typeof res.body.uptime).toBe("number");
@@ -39,34 +41,38 @@ describe("HTTP Endpoints", () => {
       };
       const anilistService = new AniListService(configWithToken.anilistToken);
       const { server } = createMcpServer(configWithToken, anilistService);
-      const { app } = createHttpApp(server, anilistService, configWithToken);
+      const { app } = await createHttpApp(server, anilistService, configWithToken);
 
       const res = await request(app).get("/health");
 
       expect(res.status).toBe(200);
+      expect(res.body.service).toBe(configWithToken.name);
+      expect(res.body.version).toBe(configWithToken.version);
       expect(res.body.authenticated).toBe(true);
     });
   });
 
-  describe("POST /messages", () => {
-    it("should return 400 when sessionId is missing", async () => {
+  describe("Streamable HTTP MCP Endpoints", () => {
+    it("should process Streamable HTTP initialize request on /mcp with proper Accept header", async () => {
       const anilistService = new AniListService();
       const { server } = createMcpServer(baseConfig, anilistService);
-      const { app } = createHttpApp(server, anilistService, baseConfig);
+      const { app } = await createHttpApp(server, anilistService, baseConfig);
 
-      const res = await request(app).post("/messages").send({});
-      expect(res.status).toBe(400);
-      expect(res.body.error).toContain("Missing sessionId");
-    });
+      const res = await request(app)
+        .post("/mcp")
+        .set("Accept", "application/json, text/event-stream")
+        .send({
+          jsonrpc: "2.0",
+          method: "initialize",
+          id: 1,
+          params: {
+            protocolVersion: "2024-11-05",
+            capabilities: {},
+            clientInfo: { name: "test-client", version: "1.0.0" },
+          },
+        });
 
-    it("should return 404 when session is not found", async () => {
-      const anilistService = new AniListService();
-      const { server } = createMcpServer(baseConfig, anilistService);
-      const { app } = createHttpApp(server, anilistService, baseConfig);
-
-      const res = await request(app).post("/messages?sessionId=unknown-session-123").send({});
-      expect(res.status).toBe(404);
-      expect(res.body.error).toContain("Session not found");
+      expect(res.status).toBe(200);
     });
   });
 });

@@ -8,8 +8,8 @@ export function createMcpServer(config: AppConfig, anilistService?: AniListServi
   anilist: AniListService;
 } {
   const server = new McpServer({
-    name: "anilist-mcp",
-    version: "1.0.0",
+    name: config.name,
+    version: config.version,
   });
 
   const anilist = anilistService || new AniListService(config.anilistToken);

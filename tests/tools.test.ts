@@ -5,6 +5,8 @@ import { AppConfig } from "../src/types/index.js";
 
 describe("MCP Tools Registration and Handling", () => {
   const config: AppConfig = {
+    name: "anilist-mcp",
+    version: "1.0.0",
     transport: "stdio",
     port: 3000,
     host: "0.0.0.0",
