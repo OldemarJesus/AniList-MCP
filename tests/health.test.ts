@@ -97,6 +97,51 @@ describe("HTTP Endpoints & Health Check", () => {
 
       expect(res.status).toBe(200);
     });
+
+    it("should allow multiple client initializations and reinitializations with new session IDs", async () => {
+      const anilistService = new AniListService();
+      const { server } = createMcpServer(baseConfig, anilistService);
+      const { app } = await createHttpApp(server, anilistService, baseConfig);
+
+      // First client / initialize
+      const res1 = await request(app)
+        .post("/mcp")
+        .set("Accept", "application/json, text/event-stream")
+        .send({
+          jsonrpc: "2.0",
+          method: "initialize",
+          id: 1,
+          params: {
+            protocolVersion: "2024-11-05",
+            capabilities: {},
+            clientInfo: { name: "client-1", version: "1.0.0" },
+          },
+        });
+
+      expect(res1.status).toBe(200);
+      const sessionId1 = res1.headers["mcp-session-id"];
+      expect(sessionId1).toBeDefined();
+
+      // Second client or reinitialize request
+      const res2 = await request(app)
+        .post("/mcp")
+        .set("Accept", "application/json, text/event-stream")
+        .send({
+          jsonrpc: "2.0",
+          method: "initialize",
+          id: 2,
+          params: {
+            protocolVersion: "2024-11-05",
+            capabilities: {},
+            clientInfo: { name: "client-2", version: "1.0.0" },
+          },
+        });
+
+      expect(res2.status).toBe(200);
+      const sessionId2 = res2.headers["mcp-session-id"];
+      expect(sessionId2).toBeDefined();
+      expect(sessionId2).not.toEqual(sessionId1);
+    });
   });
 });
 
