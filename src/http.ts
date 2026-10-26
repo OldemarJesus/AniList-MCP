@@ -4,6 +4,7 @@ import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { AniListService } from "./services/anilist.js";
 import { AppConfig, HealthResponse } from "./types/index.js";
+import { runWithAuthContext } from "./context.js";
 
 export async function createHttpApp(
   server: McpServer,
@@ -38,11 +39,21 @@ export async function createHttpApp(
 
   /**
    * Streamable HTTP MCP Endpoint
-   * Supports standard /mcp as well as backward-compatible /sse and /messages routes
+   * Supports standard /mcp as well as backward-compatible /sse and /messages routes.
+   * Extracts Bearer token from Authorization header and binds it to the async request context.
    */
   app.all(["/mcp", "/sse", "/messages"], async (req: Request, res: Response) => {
     try {
-      await transport.handleRequest(req, res, req.body);
+      const authHeader = req.headers.authorization;
+      let token: string | undefined;
+
+      if (authHeader && authHeader.toLowerCase().startsWith("bearer ")) {
+        token = authHeader.substring(7).trim();
+      }
+
+      await runWithAuthContext({ token }, async () => {
+        await transport.handleRequest(req, res, req.body);
+      });
     } catch (error: any) {
       if (!res.headersSent) {
         res.status(500).json({ error: error.message || "Failed to handle transport request" });
