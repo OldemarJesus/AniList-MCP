@@ -29,6 +29,14 @@
     "agents"
   ],
   "author": "Oldemar Jesus",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/OldemarJesus/AniList-MCP.git"
+  },
+  "bugs": {
+    "url": "https://github.com/OldemarJesus/AniList-MCP/issues"
+  },
+  "homepage": "https://github.com/OldemarJesus/AniList-MCP#readme",
   "license": "MIT",
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.6.0",

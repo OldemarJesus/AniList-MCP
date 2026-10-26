@@ -1,6 +1,6 @@
 # AniList-MCP 🚀
 
-[![CI/CD Docker Build](https://github.com/oldemar/AniList-MCP/actions/workflows/docker-build.yml/badge.svg)](https://github.com/oldemar/AniList-MCP/actions)
+[![CI/CD Docker Build](https://github.com/OldemarJesus/AniList-MCP/actions/workflows/docker-build.yml/badge.svg)](https://github.com/OldemarJesus/AniList-MCP/actions)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 [![Node.js Version](https://img.shields.io/badge/Node.js-20+-green.svg)](https://nodejs.org/)
 [![MCP Specification](https://img.shields.io/badge/MCP-Standard-purple.svg)](https://modelcontextprotocol.io/)
@@ -30,6 +30,7 @@ Connects your AI agents (Claude Desktop, Cursor, Antigravity IDE, etc.) directly
 - [Docker Deployment](#-docker-deployment)
 - [Testing](#-testing)
 - [Documentation](#-documentation)
+- [Author](#-author)
 - [License](#-license)
 
 ---
@@ -40,7 +41,7 @@ Connects your AI agents (Claude Desktop, Cursor, Antigravity IDE, etc.) directly
 
 ```bash
 # Clone the repository
-git clone https://github.com/oldemar/AniList-MCP.git
+git clone https://github.com/OldemarJesus/AniList-MCP.git
 cd AniList-MCP
 
 # Start with Docker Compose
@@ -180,6 +181,12 @@ Detailed documentation is available in the [`docs/`](docs/) directory:
 - [API Reference](docs/api.md)
 - [Docker Guide](docs/docker.md)
 - [Developer Guide](docs/development.md)
+
+---
+ 
+## 👤 Author
+
+Developed and maintained by **[Oldemar Jesus](https://github.com/OldemarJesus)**.
 
 ---
 
